@@ -1,4 +1,4 @@
-package bBoltClient
+package bClient
 
 import (
 	"fmt"
