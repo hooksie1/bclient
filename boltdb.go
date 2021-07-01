@@ -1,4 +1,4 @@
-package bClient
+package bclient
 
 import (
         "fmt"
