@@ -1,101 +1,111 @@
 package bclient
 
 import (
-        "fmt"
-        "go.etcd.io/bbolt"
+	"fmt"
+	"go.etcd.io/bbolt"
 )
 
 type boltWriter interface {
-        write() *boltTxn
+	write() *boltTxn
 }
 
 type boltReader interface {
-        read() *boltTxn
+	read() *boltTxn
 }
 
 type boltDeleter interface {
-        delete() *boltTxn
+	delete() *boltTxn
 }
 
-type validator interface {
-        validate() *boltTxn
+type boltExister interface {
+	exists() *boltTxn
 }
 
 // BoltClient holds a Bolt DB connection
 type BoltClient struct {
-        DB     *bbolt.DB
+	DB *bbolt.DB
 }
 
 // boltTxn holds a transaction function and a return value from the transaction.
 type boltTxn struct {
-       // returnValue allows for a value to be returned from a function. Since the function is returned
-       // and then run, the value(s) can be stored in returnValue so it can be accessed outside of db.View()
-       returnValue interface{}
-       txn func(tx *bbolt.Tx) error
+	// returnValue allows for a value to be returned from a function. Since the function is returned
+	// and then run, the value(s) can be stored in returnValue so it can be accessed outside of db.View()
+	returnValue interface{}
+	txn         func(tx *bbolt.Tx) error
 }
 
 // NewClient returns a new BoltClient
 func NewClient() *BoltClient {
-        return &BoltClient{}
+	return &BoltClient{}
 }
 
 // NewDB creates a new database or opens an existing database and attaches it to the client.
 func (b *BoltClient) NewDB(name string) error {
-        var err error
-        b.DB, err = bbolt.Open(name, 0644, nil)
-        if err != nil {
-                return fmt.Errorf("erorr openeing database: %s", err)
-        }
+	var err error
+	b.DB, err = bbolt.Open(name, 0644, nil)
+	if err != nil {
+		return fmt.Errorf("erorr openeing database: %s", err)
+	}
 
-        return nil
+	return nil
 }
 
 // Write is the entrypoint to write either a KV, a slice of KVs, or a Bucket.
 func (b BoltClient) Write(w boltWriter) error {
 
-        btrx := w.write()
+	btrx := w.write()
 
-        if err := b.DB.Update(btrx.txn); err != nil {
-                return err
-        }
+	if err := b.DB.Update(btrx.txn); err != nil {
+		return err
+	}
 
-        return nil
+	return nil
 }
 
 // Read is the entrypoint to read a KV or slice of KVs.
 func (b BoltClient) Read(r boltReader) error {
-        btrx := r.read()
+	btrx := r.read()
 
-         if err :=  b.DB.View(btrx.txn); err != nil {
-                return err
-        }
+	if err := b.DB.View(btrx.txn); err != nil {
+		return err
+	}
 
-        return nil
+	return nil
 }
 
 // ReadAll is the entrypoint to read all KVs from a bucket.
 func (b BoltClient) ReadAll(r boltReader) (KVs, error) {
-        btrx := r.read()
+	btrx := r.read()
 
-        if err := b.DB.View(btrx.txn); err != nil {
-                return nil, err
-        }
+	if err := b.DB.View(btrx.txn); err != nil {
+		return nil, err
+	}
 
-        val, ok := btrx.returnValue.(KVs)
-        if !ok {
-                return nil, fmt.Errorf("error getting KVs")
-        }
+	val, ok := btrx.returnValue.(KVs)
+	if !ok {
+		return nil, fmt.Errorf("error getting KVs")
+	}
 
-        return val, nil
+	return val, nil
 }
 
 // Delete is the entrypoint to delete a database resource.
 func (b BoltClient) Delete(r boltDeleter) error {
-        btrx := r.delete()
+	btrx := r.delete()
 
-        if err := b.DB.Update(btrx.txn); err != nil {
-                return err
-        }
+	if err := b.DB.Update(btrx.txn); err != nil {
+		return err
+	}
 
-        return nil
+	return nil
+}
+
+// Exists is the entrypoint to check if a bucket or KV exists.
+func (b BoltClient) Exists(r boltExister) (bool, error) {
+	btrx := r.exists()
+	if err := b.DB.View(btrx.txn); err != nil {
+		return false, err
+	}
+
+	return btrx.returnValue.(bool), nil
 }

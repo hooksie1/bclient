@@ -24,8 +24,8 @@ func (b Bucket) write() *boltTxn {
 }
 
 // validate validates whether a bucket exists or not.
-func (b Bucket) validate() *boltTxn {
-	return validate(b.Name)
+func (b Bucket) exists() *boltTxn {
+	return exists(b.Name)
 }
 
 // delete deletes the bucket.
@@ -87,14 +87,15 @@ func createIfNotExists(name string) *boltTxn {
 
 }
 
-// validate returns an BucketNotFound error if a bucket does not exist
-func validate(name string) *boltTxn {
+// exists returns false if the bucket does not exist
+func exists(name string) *boltTxn {
 	var btxn boltTxn
+	btxn.returnValue = false
 
 	btxn.txn = func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(name))
-		if b == nil {
-			return bbolt.ErrBucketNotFound
+		if b != nil {
+			btxn.returnValue = true
 		}
 
 		return nil
