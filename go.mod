@@ -1,4 +1,4 @@
-module gitlab.com/hooksie1/bclient
+module github.com/hooksie1/bclient
 
 go 1.16
 
