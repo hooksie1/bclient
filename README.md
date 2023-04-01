@@ -27,6 +27,12 @@ bucket := bc.NewBucket("test")
 client.Write(bucket)
 ```
 
+### Create a Nested Bucket
+```go
+bucket := bc.NewBucket("test")
+nested := bc.NewBucket("nested")
+bucket.SetNestedBucket(nested)
+
 ### Create a New KV
 
 ```go

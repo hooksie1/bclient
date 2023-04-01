@@ -7,9 +7,9 @@ import (
 )
 
 type KV struct {
-	Bucket string `json:"bucket,omitempty"`
-	Key    string `json:"key,omitempty"`
-	Value  string `json:"value,omitempty"`
+	Bucket *Bucket `json:"bucket,omitempty"`
+	Key    string  `json:"key,omitempty"`
+	Value  string  `json:"value,omitempty"`
 }
 
 type KVs []*KV
@@ -27,7 +27,7 @@ func (kv *KV) SetKey(k string) *KV {
 }
 
 // SetBucket sets the bucket value for a KV.
-func (kv *KV) SetBucket(b string) *KV {
+func (kv *KV) SetBucket(b *Bucket) *KV {
 	kv.Bucket = b
 
 	return kv
@@ -65,7 +65,7 @@ func (kv *KV) read() *boltTxn {
 	var btxn boltTxn
 
 	btxn.txn = func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(kv.Bucket))
+		bucket := tx.Bucket([]byte(kv.Bucket.Name))
 		if bucket == nil {
 			return bbolt.ErrBucketNotFound
 		}
@@ -84,7 +84,7 @@ func (kvs KVs) read() *boltTxn {
 
 	btxn.txn = func(tx *bbolt.Tx) error {
 		for _, v := range kvs {
-			bucket := tx.Bucket([]byte(v.Bucket))
+			bucket := tx.Bucket([]byte(v.Bucket.Name))
 			if bucket == nil {
 				return bbolt.ErrBucketNotFound
 			}
@@ -103,7 +103,7 @@ func createKV(kv KV) *boltTxn {
 	var btxn boltTxn
 
 	btxn.txn = func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(kv.Bucket))
+		bucket := tx.Bucket([]byte(kv.Bucket.Name))
 		if bucket == nil {
 			return bbolt.ErrBucketNotFound
 		}
@@ -124,7 +124,7 @@ func createKVs(kvs KVs) *boltTxn {
 
 	btxn.txn = func(tx *bbolt.Tx) error {
 		for _, v := range kvs {
-			bucket := tx.Bucket([]byte(v.Bucket))
+			bucket := tx.Bucket([]byte(v.Bucket.Name))
 			if bucket == nil {
 				return bbolt.ErrBucketNotFound
 			}
@@ -143,7 +143,7 @@ func deleteKV(kv KV) *boltTxn {
 	var btxn boltTxn
 
 	btxn.txn = func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(kv.Bucket))
+		bucket := tx.Bucket([]byte(kv.Bucket.Name))
 		if bucket == nil {
 			return bbolt.ErrBucketNotFound
 		}
@@ -162,7 +162,7 @@ func deleteKVs(kvs KVs) *boltTxn {
 
 	btxn.txn = func(tx *bbolt.Tx) error {
 		for _, v := range kvs {
-			bucket := tx.Bucket([]byte(v.Bucket))
+			bucket := tx.Bucket([]byte(v.Bucket.Name))
 			if bucket == nil {
 				return bbolt.ErrBucketNotFound
 			}

@@ -8,19 +8,25 @@ import (
 
 // Bucket holds the name of a bucket in a BoltDB database.
 type Bucket struct {
-	Name string `json:"name,omitempty"`
+	Name   string             `json:"name,omitempty"`
+	Nested map[string]*Bucket `json:"children,omitempty"`
 }
 
 // NewBucket returns a Bucket with the specified name.
 func NewBucket(name string) *Bucket {
 	return &Bucket{
-		Name: name,
+		Name:   name,
+		Nested: make(map[string]*Bucket),
 	}
+}
+
+func (b *Bucket) SetNestedBucket(c *Bucket) {
+	b.Nested[c.Name] = c
 }
 
 // write writes a bucket to the database.
 func (b Bucket) write() *boltTxn {
-	return createIfNotExists(b.Name)
+	return createIfNotExists(&b)
 }
 
 // validate validates whether a bucket exists or not.
@@ -72,13 +78,20 @@ func (b Bucket) read() *boltTxn {
 }
 
 // createifNotExists creates a new bucket in the database with the specified name
-func createIfNotExists(name string) *boltTxn {
+func createIfNotExists(b *Bucket) *boltTxn {
 	var btxn boltTxn
 
 	btxn.txn = func(tx *bbolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(name))
+		parent, err := tx.CreateBucketIfNotExists([]byte(b.Name))
 		if err != nil {
 			return err
+		}
+
+		for _, v := range b.Nested {
+			_, err := parent.CreateBucketIfNotExists([]byte(v.Name))
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	}
