@@ -123,24 +123,24 @@ func exists(name string) *boltTxn {
 // traverses down the buckets to get the actual bucket. This is needed since the nested buckets are called by chaining together
 // instead of just calling the bucket name directly.
 func getBucket(tx *bbolt.Tx, b *Bucket) *bbolt.Bucket {
-	depth := 0
 	buckets := []*Bucket{}
 	head := b
 
-	p := b.Parent
-
-	for p != nil {
-		buckets = append(buckets, p)
-		head = p
-		p = p.Parent
-		depth++
+	for head.Parent != nil {
+		buckets = append(buckets, head)
+		head = head.Parent
 	}
 
 	bucket := tx.Bucket([]byte(head.Name))
 
 	for i := len(buckets) - 1; i >= 0; i-- {
-		if bucket != nil {
-			bucket.Bucket([]byte(buckets[i].Name))
+		if head != nil {
+			tmp := bucket.Bucket([]byte(buckets[i].Name))
+			if tmp == nil {
+				break
+			}
+
+			bucket = tmp
 		}
 	}
 
