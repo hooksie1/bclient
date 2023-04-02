@@ -25,17 +25,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	song1 := bclient.NewKV().SetBucket(songs).SetKey("Have Yourself A Merry Little Christmas").
-		SetValue(`{"length": "4:48", "writers": ["Hugh Martin", "Ralph Blane"]}`)
-
-	song2 := bclient.NewKV().SetBucket(songs).SetKey("Oh Come All Ye Faithful").
-		SetValue(`{"length": "4:40", "writers": ["Traditional"]}`)
-
-	if err := client.Write(song1); err != nil {
-		log.Fatal(err)
+	kvs := bclient.KVs{
+		bclient.NewKV().SetBucket(songs).SetKey("Have Yourself A Merry Little Christmas").
+			SetValue(`{"length": "4:48", "writers": ["Hugh Martin", "Ralph Blane"]}`),
+		bclient.NewKV().SetBucket(songs).SetKey("Oh Come All Ye Faithful").
+			SetValue(`{"length": "4:40", "writers": ["Traditional"]}`),
 	}
 
-	if err := client.Write(song2); err != nil {
+	if err := client.Write(kvs); err != nil {
 		log.Fatal(err)
 	}
 
@@ -51,7 +48,6 @@ func main() {
 	}
 
 	// lookup single key
-
 	single := bclient.NewKV().SetBucket(songs).SetKey("Oh Come All Ye Faithful")
 
 	if err := client.Read(single); err != nil {

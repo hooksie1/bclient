@@ -37,7 +37,8 @@ bucket.SetNestedBucket(nested)
 ### Create a New KV
 
 ```go
-kv := bc.NewKV().SetBucket(bucket.Name).
+bucket := bc.NewBucket("test")
+kv := bc.NewKV().SetBucket(bucket).
 	SetKey("testkey").SetValue("testvalue")
 client.Write(kv)
 ```
@@ -46,7 +47,8 @@ client.Write(kv)
 Reading a KV sets the value in the KV passed to read.
 
 ```go
-kv := bc.NewKV().SetBucket(bucket.Name).
+bucket := bc.NewBucket("test")
+kv := bc.NewKV().SetBucket(bucket).
 	SetKey("testkey")
 client.Read(kv)
 fmt.Println(kv.Value)
@@ -54,9 +56,10 @@ fmt.Println(kv.Value)
 
 ### Write a Slice of KVs
 ```go
-kv1 := bc.NewKV().SetBucket(bucket.Name).
+bucket := bc.NewBucket("test")
+kv1 := bc.NewKV().SetBucket(bucket).
 	SetKey("test").SetValue("test")
-kv2 := bc.NewKV().SetBucket(bucket.Name).
+kv2 := bc.NewKV().SetBucket(bucket).
 	SetKey("somekey").SetValue("somevalue")
 
 kvs := bc.KVs {
