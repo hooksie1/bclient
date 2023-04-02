@@ -84,22 +84,32 @@ func createIfNotExists(b *Bucket) *boltTxn {
 	var btxn boltTxn
 
 	btxn.txn = func(tx *bbolt.Tx) error {
-		parent, err := tx.CreateBucketIfNotExists([]byte(b.Name))
-		if err != nil {
-			return err
-		}
-
-		for _, v := range b.Nested {
-			_, err := parent.CreateBucketIfNotExists([]byte(v.Name))
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+		return createNestedBuckets(tx, b, nil)
 	}
 
 	return &btxn
 
+}
+
+func createNestedBuckets(tx *bbolt.Tx, bucket *Bucket, bbucket *bbolt.Bucket) error {
+	var nested *bbolt.Bucket
+	var err error
+	if bbucket == nil {
+		nested, err = tx.CreateBucketIfNotExists([]byte(bucket.Name))
+	} else {
+		nested, err = bbucket.CreateBucketIfNotExists([]byte(bucket.Name))
+	}
+	if err != nil {
+		return err
+	}
+
+	for _, v := range bucket.Nested {
+		if v.Nested != nil {
+			createNestedBuckets(tx, v, nested)
+		}
+	}
+
+	return nil
 }
 
 // exists returns false if the bucket does not exist
@@ -134,12 +144,8 @@ func getBucket(tx *bbolt.Tx, b *Bucket) *bbolt.Bucket {
 	bucket := tx.Bucket([]byte(head.Name))
 
 	for i := len(buckets) - 1; i >= 0; i-- {
-		if head != nil {
-			tmp := bucket.Bucket([]byte(buckets[i].Name))
-			if tmp == nil {
-				break
-			}
-
+		tmp := bucket.Bucket([]byte(buckets[i].Name))
+		if tmp != nil {
 			bucket = tmp
 		}
 	}
