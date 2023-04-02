@@ -65,7 +65,7 @@ func (kv *KV) read() *boltTxn {
 	var btxn boltTxn
 
 	btxn.txn = func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(kv.Bucket.Name))
+		bucket := getBucket(tx, kv.Bucket)
 		if bucket == nil {
 			return bbolt.ErrBucketNotFound
 		}
@@ -84,7 +84,7 @@ func (kvs KVs) read() *boltTxn {
 
 	btxn.txn = func(tx *bbolt.Tx) error {
 		for _, v := range kvs {
-			bucket := tx.Bucket([]byte(v.Bucket.Name))
+			bucket := getBucket(tx, v.Bucket)
 			if bucket == nil {
 				return bbolt.ErrBucketNotFound
 			}
@@ -103,7 +103,8 @@ func createKV(kv KV) *boltTxn {
 	var btxn boltTxn
 
 	btxn.txn = func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(kv.Bucket.Name))
+		bucket := getBucket(tx, kv.Bucket)
+
 		if bucket == nil {
 			return bbolt.ErrBucketNotFound
 		}
@@ -124,7 +125,7 @@ func createKVs(kvs KVs) *boltTxn {
 
 	btxn.txn = func(tx *bbolt.Tx) error {
 		for _, v := range kvs {
-			bucket := tx.Bucket([]byte(v.Bucket.Name))
+			bucket := getBucket(tx, v.Bucket)
 			if bucket == nil {
 				return bbolt.ErrBucketNotFound
 			}
@@ -143,7 +144,7 @@ func deleteKV(kv KV) *boltTxn {
 	var btxn boltTxn
 
 	btxn.txn = func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(kv.Bucket.Name))
+		bucket := getBucket(tx, kv.Bucket)
 		if bucket == nil {
 			return bbolt.ErrBucketNotFound
 		}

@@ -15,13 +15,14 @@ func main() {
 	artists := bclient.NewBucket("Artists")
 	ts := bclient.NewBucket("Twisted Sister")
 	christmasAlbum := bclient.NewBucket("A Twisted Christmas")
+
 	songs := bclient.NewBucket("songs")
 
 	artists.SetNestedBucket(ts)
 	ts.SetNestedBucket(christmasAlbum)
 	christmasAlbum.SetNestedBucket(songs)
 
-	if err := client.Write(songs); err != nil {
+	if err := client.Write(artists); err != nil {
 		log.Fatal(err)
 	}
 
@@ -36,8 +37,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// lookup all keys
+	//lookup all keys
 	songList, err := client.ReadAll(songs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	as, err := client.ReadAll(artists)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,6 +51,10 @@ func main() {
 	for _, v := range songList {
 		fmt.Println(v.Key)
 		fmt.Println(v.Value)
+	}
+
+	for _, v := range as {
+		fmt.Println(v.Key)
 	}
 
 	// lookup single key

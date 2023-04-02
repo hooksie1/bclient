@@ -10,6 +10,7 @@ import (
 type Bucket struct {
 	Name   string             `json:"name,omitempty"`
 	Nested map[string]*Bucket `json:"children,omitempty"`
+	Parent *Bucket
 }
 
 // NewBucket returns a Bucket with the specified name.
@@ -22,6 +23,7 @@ func NewBucket(name string) *Bucket {
 
 func (b *Bucket) SetNestedBucket(c *Bucket) {
 	b.Nested[c.Name] = c
+	c.Parent = b
 }
 
 // write writes a bucket to the database.
@@ -55,7 +57,7 @@ func (b Bucket) read() *boltTxn {
 	var kvs KVs
 	var btxn boltTxn
 	btxn.txn = func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(b.Name))
+		bucket := getBucket(tx, &b)
 		if bucket == nil {
 			return fmt.Errorf("bucket not found")
 		}
@@ -115,4 +117,32 @@ func exists(name string) *boltTxn {
 	}
 
 	return &btxn
+}
+
+// getBucket takes a bbolt Transaction and a bucket. It traverses up the links of buckets to find the top level parent. Then
+// traverses down the buckets to get the actual bucket. This is needed since the nested buckets are called by chaining together
+// instead of just calling the bucket name directly.
+func getBucket(tx *bbolt.Tx, b *Bucket) *bbolt.Bucket {
+	depth := 0
+	buckets := []*Bucket{}
+	head := b
+
+	p := b.Parent
+
+	for p != nil {
+		buckets = append(buckets, p)
+		head = p
+		p = p.Parent
+		depth++
+	}
+
+	bucket := tx.Bucket([]byte(head.Name))
+
+	for i := len(buckets) - 1; i >= 0; i-- {
+		if bucket != nil {
+			bucket.Bucket([]byte(buckets[i].Name))
+		}
+	}
+
+	return bucket
 }
