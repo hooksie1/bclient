@@ -12,7 +12,7 @@ This is an attempt to make it a little less verbose to interact with bbolt.
 ```go
 package 
 import (
-  bc "gitlab.com/hooksie1/bclient"
+  bc "github.com/hooksie1/bclient"
 )
 func main() {
  client := bc.NewClient()
